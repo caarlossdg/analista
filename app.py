@@ -3,7 +3,7 @@ import requests
 import os
 
 HF_TOKEN = st.secrets.get("HF_TOKEN", os.getenv("HF_TOKEN"))
-API_URL = "https://api-inference.huggingface.co/models/meta-llama/Llama-3-3.3-70B-Instruct"
+API_URL = "https://api-inference.huggingface.co/models/NousResearch/Hermes-3-Llama-3-1-8B"
 HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"}
 
 def consultar_modelo(prompt):
