@@ -5,19 +5,22 @@ import os
 # 🔐 Token Hugging Face desde secrets o variable de entorno
 HF_TOKEN = st.secrets.get("HF_TOKEN", os.getenv("HF_TOKEN"))
 
-# ✅ Modelo accesible sin cuenta Pro
-API_URL = "https://api-inference.huggingface.co/models/NousResearch/Hermes-3-Llama-3-1-8B"
+# ✅ Modelo gratuito y estable
+API_URL = "https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta"
 HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"}
 
+# Función para consultar la API de Hugging Face
 def consultar_modelo(prompt):
     try:
         response = requests.post(API_URL, headers=HEADERS, json={"inputs": prompt})
+        if response.status_code != 200:
+            return {"error": f"Código de estado {response.status_code}: {response.text}"}
         result = response.json()
         return result
     except Exception as e:
         return {"error": str(e)}
 
-# 🧠 Interfaz
+# Interfaz Streamlit
 st.title("🤖 Asistente de Análisis de Software")
 
 apps = st.text_input("📱 Nombre(s) de la(s) aplicación(es):", placeholder="Ej: Replika, Notion")
@@ -52,10 +55,9 @@ Desea un análisis tipo: {tipo}
 
         with st.spinner("Consultando modelo en Hugging Face..."):
             resultado = consultar_modelo(prompt)
+            st.write("🔎 Resultado crudo de la API:", resultado)  # 👁️ Mostrar lo que responde la API
 
-            # 👁️ Mostrar resultado bruto para depurar si algo falla
-            # st.write(resultado)
-
+            # Procesar respuesta del modelo
             if "error" in resultado:
                 st.error(f"⚠️ Error: {resultado['error']}")
             elif isinstance(resultado, list) and "generated_text" in resultado[0]:
@@ -63,4 +65,4 @@ Desea un análisis tipo: {tipo}
             elif isinstance(resultado, dict) and "generated_text" in resultado:
                 st.markdown(resultado["generated_text"])
             else:
-                st.error("⚠️ Error al procesar la respuesta del modelo.")
+                st.error("⚠️ No se pudo procesar la respuesta del modelo.")
