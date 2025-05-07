@@ -2,21 +2,18 @@ import streamlit as st
 import requests
 import os
 
-# 🔐 Token Hugging Face desde secrets o variable de entorno
+# 🔐 Token de Hugging Face
 HF_TOKEN = st.secrets.get("HF_TOKEN", os.getenv("HF_TOKEN"))
-
-# ✅ Modelo gratuito y estable
 API_URL = "https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta"
 HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"}
 
-# Función para consultar la API de Hugging Face
+# Función para consultar el modelo
 def consultar_modelo(prompt):
     try:
         response = requests.post(API_URL, headers=HEADERS, json={"inputs": prompt})
         if response.status_code != 200:
             return {"error": f"Código de estado {response.status_code}: {response.text}"}
-        result = response.json()
-        return result
+        return response.json()
     except Exception as e:
         return {"error": str(e)}
 
@@ -24,14 +21,17 @@ def consultar_modelo(prompt):
 st.title("🤖 Asistente de Análisis de Software")
 
 apps = st.text_input("📱 Nombre(s) de la(s) aplicación(es):", placeholder="Ej: Replika, Notion")
-contexto = st.text_input("🎯 ¿Algún contexto o uso específico?", placeholder="Ej: uso educativo")
+contexto = st.text_input("🎯 ¿Algún contexto o uso específico?", placeholder="Ej: enseñanza de idiomas, productividad")
 tipo = st.radio("🔎 Tipo de análisis", ["Breve", "Completo"])
 
+# Al hacer clic en analizar
 if st.button("Analizar"):
-    if not apps:
-        st.warning("Por favor, introduce al menos una aplicación.")
+    if not apps and not contexto:
+        st.warning("Por favor, introduce al menos una aplicación o un contexto.")
     else:
-        prompt = f"""
+        # Caso 1: Análisis de una o varias apps
+        if apps:
+            prompt = f"""
 Actúa como un asistente en castellano experto en análisis de software. 
 Usuario ha indicado las siguientes apps: {apps}
 Contexto específico: {contexto if contexto else 'Ninguno'}
@@ -53,11 +53,24 @@ Desea un análisis tipo: {tipo}
 9. ¿Recomendada?
 """
 
+        # Caso 2: Solo se dio contexto, generar recomendaciones
+        else:
+            prompt = f"""
+Actúa como un asistente en castellano experto en análisis de software.
+El usuario no ha especificado ninguna aplicación, pero sí un contexto de uso: "{contexto}".
+Tu tarea es recomendarle las mejores aplicaciones disponibles actualmente para ese caso,
+explicando brevemente qué hace cada una, sus ventajas y en qué situaciones se destaca.
+Al final, sugiere cuál es la mejor opción según lo descrito.
+
+Estructura sugerida:
+1. Recomendaciones principales (nombre y descripción breve)
+2. Comparativa de ventajas
+3. Recomendación final con justificación
+"""
+
+        # Consultar el modelo
         with st.spinner("Consultando modelo en Hugging Face..."):
             resultado = consultar_modelo(prompt)
-            st.write("🔎 Resultado crudo de la API:", resultado)  # 👁️ Mostrar lo que responde la API
-
-            # Procesar respuesta del modelo
             if "error" in resultado:
                 st.error(f"⚠️ Error: {resultado['error']}")
             elif isinstance(resultado, list) and "generated_text" in resultado[0]:
