@@ -2,15 +2,15 @@ import streamlit as st
 import requests
 import os
 
-# 🔐 Token de Hugging Face
+# 🔐 Token Hugging Face
 HF_TOKEN = st.secrets.get("HF_TOKEN", os.getenv("HF_TOKEN"))
-API_URL = "https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta"
+API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1"
 HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"}
 
 # Función para consultar el modelo
 def consultar_modelo(prompt):
     try:
-        response = requests.post(API_URL, headers=HEADERS, json={"inputs": prompt})
+        response = requests.post(API_URL, headers=HEADERS, json={"inputs": prompt}, timeout=45)
         if response.status_code != 200:
             return {"error": f"Código de estado {response.status_code}: {response.text}"}
         return response.json()
@@ -24,12 +24,11 @@ apps = st.text_input("📱 Nombre(s) de la(s) aplicación(es):", placeholder="Ej
 contexto = st.text_input("🎯 ¿Algún contexto o uso específico?", placeholder="Ej: enseñanza de idiomas, productividad")
 tipo = st.radio("🔎 Tipo de análisis", ["Breve", "Completo"])
 
-# Al hacer clic en analizar
 if st.button("Analizar"):
     if not apps and not contexto:
         st.warning("Por favor, introduce al menos una aplicación o un contexto.")
     else:
-        # Caso 1: Análisis de una o varias apps
+        # Prompt para análisis de apps
         if apps:
             prompt = f"""
 Actúa como un asistente en castellano experto en análisis de software. 
@@ -52,8 +51,7 @@ Desea un análisis tipo: {tipo}
 8. Alternativas y comparativa
 9. ¿Recomendada?
 """
-
-        # Caso 2: Solo se dio contexto, generar recomendaciones
+        # Prompt para recomendaciones por contexto
         else:
             prompt = f"""
 Actúa como un asistente en castellano experto en análisis de software.
@@ -68,7 +66,7 @@ Estructura sugerida:
 3. Recomendación final con justificación
 """
 
-        # Consultar el modelo
+        # Llamada al modelo
         with st.spinner("Consultando modelo en Hugging Face..."):
             resultado = consultar_modelo(prompt)
             if "error" in resultado:
