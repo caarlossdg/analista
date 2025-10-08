@@ -18,7 +18,7 @@ def consultar_modelo(prompt):
         return {"error": str(e)}
 
 # Interfaz Streamlit
-st.title("🤖 Asistente de Análisis de Software")
+st.title("Asistente de Análisis de Software")
 
 apps = st.text_input(" Nombre(s) de la(s) aplicación(es):", placeholder="Ej: Replika, Notion")
 contexto = st.text_input(" ¿Algún contexto o uso específico?", placeholder="Ej: enseñanza de idiomas, productividad")
